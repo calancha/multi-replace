@@ -1,4 +1,4 @@
-# Gited: Operate on Git branches like dired
+# multi-replace: Multi-dimensional query and replace
 
 [![Build Status](https://api.travis-ci.org/calancha/multi-replace.svg?branch=master)](https://travis-ci.org/calancha/multi-replace)
 
