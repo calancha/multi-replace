@@ -1,4 +1,4 @@
-# multi-replace: Multi-dimensional query and replace
+# Multi-dimensional query and replace
 
 [![Build Status](https://api.travis-ci.org/calancha/multi-replace.svg?branch=master)](https://travis-ci.org/calancha/multi-replace)
 
