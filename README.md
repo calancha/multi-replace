@@ -18,7 +18,7 @@ your *load-path*.  Then, add the following line into your .emacs:
 (require 'multi-replace)
 ```
 
-You might want to bind **mrep-query-replace** **mrep-query-replace-regexp**
+You might want to bind **mrep-query-replace**, **mrep-query-replace-regexp**
 to some easy to remember keys.  If you have the Hyper key, then the
 following combos are analogs to those for the Vanila Emacs commands:
 
