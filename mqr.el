@@ -146,7 +146,10 @@ the user inputs '' for REGEXP."
           (cadr common)
           (cadr (cdr common))
           (and current-prefix-arg (eq current-prefix-arg '-))
-          (and (use-region-p) (region-noncontiguous-p)))))
+          (with-no-warnings
+            (and (use-region-p)
+                 (> emacs-major-version 24)
+                 (region-noncontiguous-p))))))
 
 
 ;;; Same as `replace--push-stack' in Emacs version >=26
