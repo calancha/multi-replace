@@ -7,11 +7,12 @@
 
 ;; Author: Tino Calancha <tino.calancha@gmail.com>
 ;; Maintainer: Tino Calancha <tino.calancha@gmail.com>
+;; URL: https://github.com/calancha/multi-replace
 ;; Keywords: convenience, extensions, lisp
 ;; Created: Sat May 12 22:09:30 JST 2018
-;; Version: 0.1.2
-;; Package-Requires: ((emacs "26.1"))
-;; Last-Updated: Sun May 13 10:28:17 JST 2018
+;; Version: 0.1.3
+;; Package-Requires: ((emacs "24.4"))
+;; Last-Updated: Sun May 13 10:57:30 JST 2018
 ;;
 
 ;;; Commentary:
@@ -144,9 +145,31 @@ the user inputs '' for REGEXP."
     (list (car common)
           nil
           (cadr common)
-          (caddr common)
+          (cadr (cdr common))
           (and current-prefix-arg (eq current-prefix-arg '-))
           (and (use-region-p) (region-noncontiguous-p)))))
+
+
+;;; Needed for Emacs version < 26.1
+(when (< emacs-major-version 26)
+  (defmacro replace--push-stack (replaced search-str next-replace stack)
+  (declare (indent 0) (debug (form form form gv-place)))
+  `(push (list (point) ,replaced
+;;;  If the replacement has already happened, all we need is the
+;;;  current match start and end.  We could get this with a trivial
+;;;  match like
+;;;  (save-excursion (goto-char (match-beginning 0))
+;;;		     (search-forward (match-string 0))
+;;;                  (match-data t))
+;;;  if we really wanted to avoid manually constructing match data.
+;;;  Adding current-buffer is necessary so that match-data calls can
+;;;  return markers which are appropriate for editing.
+	       (if ,replaced
+		   (list
+		    (match-beginning 0) (match-end 0) (current-buffer))
+	         (match-data t))
+	       ,search-str ,next-replace)
+         ,stack)))
 
 ;;; Modify `perform-replace' to handle multiple regexp input.
 (defun mrep-perform-replace (from-string replacements
@@ -452,7 +475,8 @@ the user inputs '' for REGEXP."
 			               (message "No previous match")
 			               (ding 'no-terminate)
 			               (sit-for 1)))
-			            ((or (eq def 'undo) (eq def 'undo-all))
+			            ((and (>= emacs-major-version 26)
+                              (or (eq def 'undo) (eq def 'undo-all)))
 			             (if (null stack)
                              (progn
                                (message "Nothing to undo")
