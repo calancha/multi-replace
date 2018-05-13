@@ -9,8 +9,9 @@
 ;; Maintainer: Tino Calancha <tino.calancha@gmail.com>
 ;; Keywords: convenience, extensions, lisp
 ;; Created: Sat May 12 22:09:30 JST 2018
-;; Version: 0.1.1
-;; Package-Requires: ((emacs "26.1") (cl-lib "0.5"))
+;; Version: 0.1.2
+;; Package-Requires: ((emacs "26.1"))
+;; Last-Updated: Sun May 13 10:28:17 JST 2018
 ;;
 
 ;;; Commentary:
@@ -54,7 +55,6 @@
 
 ;;; Code:
 
-(require 'cl-lib)
 
 (defvar mrep-query-replace-alist nil
   "List of conses (REGEXP . REPLACEMENT).")
@@ -70,9 +70,10 @@ Each element is a cons (REGEXP . REPLACEMENT)."
 (defun mrep--replacement (regexp)
   "Return the replacement for REGEXP."
   (save-match-data
-    (cdr
-     (cl-assoc-if-not (lambda (s) (null (string-match s regexp)))
-                      mrep-query-replace-alist))))
+    (catch 'found
+      (dolist (elt mrep-query-replace-alist)
+        (when (string-match (car elt) regexp)
+          (throw 'found (cdr elt)))))))
 
 (defun mrep--replace-interactive-spec (prompt)
   (let ((alist '())
