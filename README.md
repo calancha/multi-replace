@@ -2,8 +2,8 @@
 
 [![Build Status](https://api.travis-ci.org/calancha/multi-replace.svg?branch=master)](https://travis-ci.org/calancha/multi-replace)
 
-This lib defines the commands **mrep-multi-replace**,
-**mrep-multi-replace-regexp**, **mrep-query-replace** and
+This lib defines the commands **mrep-replace**,
+**mrep-replace-regexp**, **mrep-query-replace** and
 **mrep-query-replace-regexp** to match and replace several regexps
 in the region.
 
@@ -15,7 +15,7 @@ To use this library, save this file in a directory included in
 your *load-path*.  Then, add the following line into your .emacs:
 
 ```
-(require 'multi-replace)
+(require 'mqr)
 ```
 
 You might want to bind **mrep-query-replace**, **mrep-query-replace-regexp**
