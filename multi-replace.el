@@ -74,7 +74,8 @@ Each element is a cons (REGEXP . REPLACEMENT)."
     (catch 'found
       (dolist (elt mrep-query-replace-alist)
         (when (string-match (car elt) regexp)
-          (throw 'found (cdr elt)))))))
+          (throw 'found (match-substitute-replacement
+                         (cdr elt) nil nil regexp)))))))
 
 (defun mrep--replace-interactive-spec (prompt)
   (let ((alist '())

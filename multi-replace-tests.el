@@ -31,9 +31,16 @@
 (ert-deftest multi-replace-tests ()
   (with-temp-buffer
     (insert "foo bar baz")
-    (mrep-replace-regexp '(("foo" . "aaa") ("bar" . "bbb") ("baz" . "ccc")))
+    (mrep-replace '(("foo" . "aaa") ("bar" . "bbb") ("baz" . "ccc")))
     (should (equal (buffer-string) "aaa bbb ccc"))))
 
+(ert-deftest multi-replace-tests-regexp ()
+  (with-temp-buffer
+    (insert "foo-123 bar-32 baz-10z99")
+    (mrep-replace-regexp '(("foo-\\([0-9]+\\)" . "aaa-\\1")
+                           ("bar-\\([0-9]+\\)" . "bbb-\\1")
+                           ("baz-\\([0-9]+\\)\\([a-z]\\)\\([0-9]+\\)" . "ccc-\\1\\2\\3")))
+    (should (equal (buffer-string) "aaa-123 bbb-32 ccc-10z99"))))
 
 
 (provide 'multi-replace-tests)
