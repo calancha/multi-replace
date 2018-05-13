@@ -153,11 +153,7 @@ the user inputs '' for REGEXP."
 (defun mqr--query-replace-interactive-spec (prompt)
   "Helper function to get command arguments.
 Ask user input with PROMPT."
-  (let* ((common (mqr--replace-interactive-spec prompt))
-         (regexp-list (mapcar #'car (car common)))
-         (replacements (mapcar #'cdr (car common))))
-    (setq mqr-alist
-          (mqr-alist regexp-list replacements))
+  (let* ((common (mqr--replace-interactive-spec prompt)))
     (list (car common)
           nil
           (cadr common)
@@ -716,7 +712,8 @@ have same meaning as in `query-replace'.
 Interactively, prompt user for the conses (STRING . REPLACEMENT) until
 the user inputs '' for STRING."
   (interactive (mqr--query-replace-interactive-spec "Multi query replace"))
-  (let ((from-string (regexp-opt (mapcar #'car from-string-alist))))
+  (let ((from-string (regexp-opt (mapcar #'car from-string-alist)))
+        (mqr-alist from-string-alist))
     (mqr-perform-replace from-string '("") t t delimited nil nil start end backward region-noncontiguous-p)))
 
 (defun mqr-query-replace-regexp (regexp-replacement-alist &optional delimited start end backward region-noncontiguous-p)
@@ -730,6 +727,7 @@ Interactively, prompt user for the conses (REGEXP . REPLACEMENT) until
 the user inputs '' for REGEXP."
   (interactive (mqr--query-replace-interactive-spec "Multi query replace regexp"))
   (let ((from-string (mapconcat #'identity (mapcar #'car regexp-replacement-alist) "\\|"))
+        (mqr-alist regexp-replacement-alist)
         (mqr--regexp-replace t))
     (mqr-perform-replace from-string '("") t t delimited nil nil start end backward region-noncontiguous-p)))
 
