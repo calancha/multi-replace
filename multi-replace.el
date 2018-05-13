@@ -134,8 +134,8 @@ the user inputs '' for REGEXP."
 
 ;;; Multi query replace
 
-(defun mrep--query-replace-interactive-spec ()
-  (let* ((common (mrep--replace-interactive-spec "Multi query replace"))
+(defun mrep--query-replace-interactive-spec (prompt)
+  (let* ((common (mrep--replace-interactive-spec prompt))
          (regexp-list (mapcar #'car (car common)))
          (replacements (mapcar #'cdr (car common))))
     (setq mrep-query-replace-alist
@@ -674,7 +674,7 @@ FROM-STRING-ALIST is a list of conses (STRING . REPLACEMENT).
 
 Interactively, prompt user for the conses (STRING . REPLACEMENT) until
 the user inputs '' for STRING."
-  (interactive (mrep--query-replace-interactive-spec))
+  (interactive (mrep--query-replace-interactive-spec "Multi query replace"))
   (let ((from-string (regexp-opt (mapcar #'car from-string-alist))))
     (mrep-perform-replace from-string '("") t t delimited nil nil start end backward region-noncontiguous-p)))
 
@@ -684,7 +684,7 @@ REGEXP-REPLACEMENT-ALIST is a list of conses (REGEXP . REPLACEMENT).
 
 Interactively, prompt user for the conses (REGEXP . REPLACEMENT) until
 the user inputs '' for REGEXP."
-  (interactive (mrep--query-replace-interactive-spec))
+  (interactive (mrep--query-replace-interactive-spec "Multi query replace regexp"))
   (let ((from-string (mapconcat #'identity (mapcar #'car regexp-replacement-alist) "\\|")))
     (mrep-perform-replace from-string '("") t t delimited nil nil start end backward region-noncontiguous-p)))
 
