@@ -156,11 +156,7 @@ the user inputs '' for REGEXP."
        (raise-frame (window-frame (minibuffer-window))))
   (let* ((case-fold-search
 	      (if (and case-fold-search search-upper-case)
-	          (if (consp from-string)
-                  (cl-every
-                   (lambda (str) (isearch-no-upper-case-p str regexp-flag))
-                   from-string)
-                (isearch-no-upper-case-p from-string regexp-flag))
+              (isearch-no-upper-case-p from-string regexp-flag)
 	        case-fold-search))
          (nocasify (not (and case-replace case-fold-search)))
          (literal (or (not regexp-flag) (eq regexp-flag 'literal)))
