@@ -61,7 +61,7 @@
   "List of conses (REGEXP . REPLACEMENT).")
 
 (defun mqr-alist (regexp-list replacements)
-  "Make an alist with the elements of REGEXP-LIST and REPLACEMENETS.
+  "Make an alist with the elements of REGEXP-LIST and REPLACEMENTS.
 Each element is a cons (REGEXP . REPLACEMENT)."
   (let (res)
     (dotimes (i (length regexp-list))
@@ -78,6 +78,8 @@ Each element is a cons (REGEXP . REPLACEMENT)."
                          (cdr elt) nil nil regexp)))))))
 
 (defun mqr--replace-interactive-spec (prompt)
+  "Helper function to get command arguments.
+Ask user input with PROMPT."
   (let ((alist '())
         (start (if (use-region-p) (region-beginning) (point-min)))
         (end (if (use-region-p) (region-end) (point-max)))
@@ -95,6 +97,11 @@ Each element is a cons (REGEXP . REPLACEMENT)."
     (list (nreverse alist) start end)))
 
 (defun mqr--replace (alist &optional start end regexp-flag)
+  "Helper function for `mqr-replace' and `mqr-replace-regexp'.
+Argument ALIST is a list of conses (REGEXP-OR-STRING . TO).
+START and END define the region where the commands act.
+If REGEXP-FLAG is non-nil then call `mqr-replace-regexp'.  Otherwise,
+call `mqr-replace'."
   (unless start (setq start (point-min)))
   (unless end (setq end (point-max)))
   (let ((regexp
@@ -136,6 +143,8 @@ the user inputs '' for REGEXP."
 ;;; Multi query replace
 
 (defun mqr--query-replace-interactive-spec (prompt)
+  "Helper function to get command arguments.
+Ask user input with PROMPT."
   (let* ((common (mqr--replace-interactive-spec prompt))
          (regexp-list (mapcar #'car (car common)))
          (replacements (mapcar #'cdr (car common))))
@@ -154,6 +163,9 @@ the user inputs '' for REGEXP."
 
 ;;; Same as `replace--push-stack' in Emacs version >=26
 (defmacro mqr-replace--push-stack (replaced search-str next-replace stack)
+  "Helper macro to update the local var STACK.
+REPLACED, SEARCH-STR and NEXT-REPLACE has same meaning as in
+`mqr-perform-replace'"
   (declare (indent 0) (debug (form form form gv-place)))
   `(push (list (point) ,replaced
 	           (if ,replaced
@@ -167,6 +179,11 @@ the user inputs '' for REGEXP."
 (defun mqr-perform-replace (from-string replacements
 		                                 query-flag regexp-flag delimited-flag
 			                             &optional _repeat-count map start end backward region-noncontiguous-p)
+  "Modified version of `perform-replace' to handle multi replacements.
+Arguments FROM-STRING, QUERY-FLAG, REGEXP-FLAG, DELIMITED-FLAG, MAP, START, END,
+BACKWARD and REGION-NONCONTIGUOUS-P have same meaning as in `perform-replace'.
+Arg _REPEAT-COUNT is unused.
+Arg REPLACEMENTS is ignored: its overwriten inside the function body."
   (or map (setq map query-replace-map))
   (and query-flag minibuffer-auto-raise
        (raise-frame (window-frame (minibuffer-window))))
@@ -685,6 +702,9 @@ the user inputs '' for REGEXP."
   "Multi-dimensional version of `query-replace'.
 FROM-STRING-ALIST is a list of conses (STRING . REPLACEMENT).
 
+Optional arguments DELIMITED, START, END, BACKWARD and REGION-NONCONTIGUOUS-P
+have same meaning as in `query-replace'.
+
 Interactively, prompt user for the conses (STRING . REPLACEMENT) until
 the user inputs '' for STRING."
   (interactive (mqr--query-replace-interactive-spec "Multi query replace"))
@@ -694,6 +714,9 @@ the user inputs '' for STRING."
 (defun mqr-query-replace-regexp (regexp-replacement-alist &optional delimited start end backward region-noncontiguous-p)
   "Multi-dimensional version of `replace-regexp'.
 REGEXP-REPLACEMENT-ALIST is a list of conses (REGEXP . REPLACEMENT).
+
+Optional arguments DELIMITED, START, END, BACKWARD and REGION-NONCONTIGUOUS-P
+have same meaning as in `query-replace'.
 
 Interactively, prompt user for the conses (REGEXP . REPLACEMENT) until
 the user inputs '' for REGEXP."
