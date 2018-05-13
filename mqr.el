@@ -68,14 +68,21 @@ Each element is a cons (REGEXP . REPLACEMENT)."
       (push (cons (nth i regexp-list) (nth i replacements)) res))
     (nreverse res)))
 
-(defun mqr--replacement (regexp)
-  "Return the replacement for REGEXP."
+(defvar mqr--regexp-replace nil "Non-nil if the user inputs regexps.")
+
+(defun mqr--replacement (matched-string)
+  "Return the replacement for MATCHED-STRING."
   (save-match-data
     (catch 'found
       (dolist (elt mqr-alist)
-        (when (string-match (car elt) regexp)
-          (throw 'found (match-substitute-replacement
-                         (cdr elt) nil nil regexp)))))))
+        (let ((target (if mqr--regexp-replace
+                          (car elt)
+                        (regexp-quote (car elt)))))
+          (when (string-match target matched-string)
+            (if mqr--regexp-replace
+                (throw 'found (match-substitute-replacement
+                               (cdr elt) nil nil matched-string))
+              (throw 'found (cdr elt)))))))))
 
 (defun mqr--replace-interactive-spec (prompt)
   "Helper function to get command arguments.
@@ -136,7 +143,8 @@ and `region-end'.  Otherwise, apply the command in the entire buffer.
 Interactively, prompt user for the conses (REGEXP . TO) until
 the user inputs '' for REGEXP."
   (interactive (mqr--replace-interactive-spec "Multi replace regexp"))
-  (mqr--replace alist start end 'regexp-flag))
+  (let ((mqr--regexp-replace t))
+    (mqr--replace alist start end 'regexp-flag)))
 
 
 
@@ -721,7 +729,8 @@ have same meaning as in `query-replace'.
 Interactively, prompt user for the conses (REGEXP . REPLACEMENT) until
 the user inputs '' for REGEXP."
   (interactive (mqr--query-replace-interactive-spec "Multi query replace regexp"))
-  (let ((from-string (mapconcat #'identity (mapcar #'car regexp-replacement-alist) "\\|")))
+  (let ((from-string (mapconcat #'identity (mapcar #'car regexp-replacement-alist) "\\|"))
+        (mqr--regexp-replace t))
     (mqr-perform-replace from-string '("") t t delimited nil nil start end backward region-noncontiguous-p)))
 
 

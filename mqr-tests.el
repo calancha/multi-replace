@@ -32,7 +32,12 @@
   (with-temp-buffer
     (insert "foo bar baz")
     (mqr-replace '(("foo" . "aaa") ("bar" . "bbb") ("baz" . "ccc")))
-    (should (equal (buffer-string) "aaa bbb ccc"))))
+    (should (equal (buffer-string) "aaa bbb ccc")))
+  ;; Must work when special regxp symbols are present, e.g. '[', ']'.
+  (with-temp-buffer
+    (insert "[foo")
+    (mqr-replace '(("foo" . "bar") ("[" . "the-")))
+    (should (equal (buffer-string) "the-bar"))))
 
 (ert-deftest mqr-tests-regexp ()
   (with-temp-buffer
