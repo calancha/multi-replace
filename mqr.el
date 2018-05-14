@@ -12,7 +12,7 @@
 ;; Created: Sat May 12 22:09:30 JST 2018
 ;; Version: 0.1.5
 ;; Package-Requires: ((emacs "24.4"))
-;; Last-Updated: Mon May 14 11:16:26 JST 2018
+;; Last-Updated: Mon May 14 14:34:24 JST 2018
 ;;
 
 ;;; Commentary:
@@ -142,6 +142,8 @@ the user inputs '' for STRING."
 (defun mqr-replace-regexp (alist &optional start end)
   "Match and replace several regexps.
 ALIST is a list of conses (REGEXP . TO).
+Match regexps in the order they appear in ALIST.
+
 START and END define the region where look for matches.  If the
 region is active, then they default to `region-beginning'
 and `region-end'.  Otherwise, apply the command in the entire buffer.
@@ -708,9 +710,9 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
 		           "")))
     (or (and keep-going stack) multi-buffer)))
 
-(defun mqr-query-replace (from-string-alist &optional delimited start end backward region-noncontiguous-p)
+(defun mqr-query-replace (alist &optional delimited start end backward region-noncontiguous-p)
   "Multi-dimensional version of `query-replace'.
-FROM-STRING-ALIST is a list of conses (STRING . REPLACEMENT).
+ALIST is a list of conses (STRING . REPLACEMENT).
 
 Optional arguments DELIMITED, START, END, BACKWARD and REGION-NONCONTIGUOUS-P
 have same meaning as in `query-replace'.
@@ -718,13 +720,14 @@ have same meaning as in `query-replace'.
 Interactively, prompt for the conses (STRING . REPLACEMENT) until the user
 inputs RET for STRING."
   (interactive (mqr--query-replace-interactive-spec "Multi query replace"))
-  (let ((from-string (regexp-opt (mapcar #'car from-string-alist)))
-        (mqr-alist from-string-alist))
+  (let ((from-string (regexp-opt (mapcar #'car alist)))
+        (mqr-alist alist))
     (mqr-perform-replace from-string '("") t t delimited nil nil start end backward region-noncontiguous-p)))
 
-(defun mqr-query-replace-regexp (regexp-replacement-alist &optional delimited start end backward region-noncontiguous-p)
+(defun mqr-query-replace-regexp (alist &optional delimited start end backward region-noncontiguous-p)
   "Multi-dimensional version of `replace-regexp'.
-REGEXP-REPLACEMENT-ALIST is a list of conses (REGEXP . REPLACEMENT).
+ALIST is a list of conses (REGEXP . REPLACEMENT).
+Match regexps in the order they appear in ALIST.
 
 Optional arguments DELIMITED, START, END, BACKWARD and REGION-NONCONTIGUOUS-P
 have same meaning as in `query-replace'.
@@ -732,8 +735,8 @@ have same meaning as in `query-replace'.
 Interactively, prompt for the conses (REGEXP . REPLACEMENT) until the user
 inputs RET for REGEXP."
   (interactive (mqr--query-replace-interactive-spec "Multi query replace regexp"))
-  (let ((from-string (mapconcat #'identity (mapcar #'car regexp-replacement-alist) "\\|"))
-        (mqr-alist regexp-replacement-alist)
+  (let ((from-string (mapconcat #'identity (mapcar #'car alist) "\\|"))
+        (mqr-alist alist)
         (mqr--regexp-replace t))
     (mqr-perform-replace from-string '("") t t delimited nil nil start end backward region-noncontiguous-p)))
 
