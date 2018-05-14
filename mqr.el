@@ -105,8 +105,8 @@ Ask user input with PROMPT."
         (setq query-replace-defaults nil)
         (unless (equal regexp "")
           (setq replace (query-replace-read-to regexp prompt nil))
-          (setq query-replace-defaults nil))
-        (push (cons regexp replace) alist)))
+          (setq query-replace-defaults nil)
+          (push (cons regexp replace) alist))))
     (list (nreverse alist) start end)))
 
 (defun mqr--replace (alist &optional start end regexp-flag)
