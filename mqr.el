@@ -10,9 +10,9 @@
 ;; URL: https://github.com/calancha/multi-replace
 ;; Keywords: convenience, extensions, lisp
 ;; Created: Sat May 12 22:09:30 JST 2018
-;; Version: 0.1.4
+;; Version: 0.1.5
 ;; Package-Requires: ((emacs "24.4"))
-;; Last-Updated: Sun May 13 10:57:30 JST 2018
+;; Last-Updated: Mon May 14 11:16:26 JST 2018
 ;;
 
 ;;; Commentary:
@@ -90,17 +90,23 @@ Ask user input with PROMPT."
   (let ((alist '())
         (start (if (use-region-p) (region-beginning) (point-min)))
         (end (if (use-region-p) (region-end) (point-max)))
-        (regexp)
-        (replace))
+        (first-prompt t)
+        regexp replace)
     (while (not (equal regexp ""))
       (let (query-replace-defaults)
-        (setq regexp (query-replace-read-from prompt nil))
-	    (setq query-replace-defaults nil)
+        (setq regexp
+              (query-replace-read-from
+               (format
+                "%s%s" prompt (if first-prompt
+                                  ""
+                                " [RET to start replacements]"))
+               nil))
+        (if first-prompt (setq first-prompt nil))
+        (setq query-replace-defaults nil)
         (unless (equal regexp "")
-          (setq replace (query-replace-read-to
-                         regexp (format "%s %s with" prompt regexp) nil))
-          (setq query-replace-defaults nil)
-          (push (cons regexp replace) alist))))
+          (setq replace (query-replace-read-to regexp prompt nil))
+          (setq query-replace-defaults nil))
+        (push (cons regexp replace) alist)))
     (list (nreverse alist) start end)))
 
 (defun mqr--replace (alist &optional start end regexp-flag)
@@ -709,8 +715,8 @@ FROM-STRING-ALIST is a list of conses (STRING . REPLACEMENT).
 Optional arguments DELIMITED, START, END, BACKWARD and REGION-NONCONTIGUOUS-P
 have same meaning as in `query-replace'.
 
-Interactively, prompt user for the conses (STRING . REPLACEMENT) until
-the user inputs '' for STRING."
+Interactively, prompt for the conses (STRING . REPLACEMENT) until the user
+inputs RET for STRING."
   (interactive (mqr--query-replace-interactive-spec "Multi query replace"))
   (let ((from-string (regexp-opt (mapcar #'car from-string-alist)))
         (mqr-alist from-string-alist))
@@ -723,8 +729,8 @@ REGEXP-REPLACEMENT-ALIST is a list of conses (REGEXP . REPLACEMENT).
 Optional arguments DELIMITED, START, END, BACKWARD and REGION-NONCONTIGUOUS-P
 have same meaning as in `query-replace'.
 
-Interactively, prompt user for the conses (REGEXP . REPLACEMENT) until
-the user inputs '' for REGEXP."
+Interactively, prompt for the conses (REGEXP . REPLACEMENT) until the user
+inputs RET for REGEXP."
   (interactive (mqr--query-replace-interactive-spec "Multi query replace regexp"))
   (let ((from-string (mapconcat #'identity (mapcar #'car regexp-replacement-alist) "\\|"))
         (mqr-alist regexp-replacement-alist)
