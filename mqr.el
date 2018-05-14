@@ -12,7 +12,7 @@
 ;; Created: Sat May 12 22:09:30 JST 2018
 ;; Version: 0.1.5
 ;; Package-Requires: ((emacs "24.4"))
-;; Last-Updated: Mon May 14 14:34:24 JST 2018
+;; Last-Updated: Tue May 15 01:12:16 JST 2018
 ;;
 
 ;;; Commentary:
@@ -70,19 +70,18 @@ Each element is a cons (REGEXP . REPLACEMENT)."
 
 (defvar mqr--regexp-replace nil "Non-nil if the user inputs regexps.")
 
-(defun mqr--replacement (matched-string)
-  "Return the replacement for MATCHED-STRING."
+(defun mqr--replacement (matched-str)
+  "Return the replacement for MATCHED-STR."
   (save-match-data
-    (catch 'found
-      (dolist (elt mqr-alist)
-        (let ((target (if mqr--regexp-replace
-                          (car elt)
-                        (regexp-quote (car elt)))))
-          (when (string-match target matched-string)
-            (if mqr--regexp-replace
-                (throw 'found (match-substitute-replacement
-                               (cdr elt) nil nil matched-string))
-              (throw 'found (cdr elt)))))))))
+    (let ((to-string
+           (assoc-default
+            matched-str mqr-alist
+            (lambda (reg str)
+              (string-match
+               (if mqr--regexp-replace reg (regexp-quote reg)) str)))))
+      (if (and to-string mqr--regexp-replace)
+          (match-substitute-replacement to-string nil nil matched-str)
+        to-string))))
 
 (defun mqr--replace-interactive-spec (prompt)
   "Helper function to get command arguments.
