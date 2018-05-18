@@ -73,14 +73,19 @@ Each element is a cons (REGEXP . REPLACEMENT)."
 (defun mqr--replacement (matched-str)
   "Return the replacement for MATCHED-STR."
   (save-match-data
-    (let ((to-string
-           (assoc-default
-            matched-str mqr-alist
-            (lambda (reg str)
-              (string-match
-               (if mqr--regexp-replace reg (regexp-quote reg)) str)))))
+    (let* ((match-data nil)
+           (to-string
+            (assoc-default
+             matched-str mqr-alist
+             (lambda (reg _str)
+               (save-match-data
+                 (goto-char (match-beginning 0))
+                 (if (looking-at (if mqr--regexp-replace reg (regexp-quote reg)))
+                     (setq match-data (match-data))))))))
       (if (and to-string mqr--regexp-replace)
-          (match-substitute-replacement to-string nil nil matched-str)
+          (progn
+            (set-match-data match-data)
+            (match-substitute-replacement to-string))
         to-string))))
 
 (defun mqr--replace-interactive-spec (prompt)
