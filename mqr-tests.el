@@ -27,6 +27,7 @@
 
 (require 'ert)
 (require 'mqr)
+(eval-when-compile (require 'cl-lib))
 
 (ert-deftest mqr-tests ()
   (with-temp-buffer
@@ -47,6 +48,26 @@
                                     ("baz-\\([0-9]+\\)\\([a-z]\\)\\([0-9]+\\)" . "ccc-\\1\\2\\3")))
     (should (equal (buffer-string) "aaa-123 bbb-32 ccc-10z99"))))
 
+
+(ert-deftest mqr-query-replace-undo-bug31492 ()
+  "Test for https://debbugs.gnu.org/31492 ."
+  (let ((text "a\nb\nc\n")
+        (count 0)
+        (inhibit-message t))
+    (with-temp-buffer
+      (insert text)
+      (goto-char 1)
+      (cl-letf (((symbol-function 'read-event)
+                 (lambda (&rest args)
+                   (cl-incf count)
+                   (let ((val (pcase count
+                                ((or 1 2) ?\s) ; replace current and go next
+                                (3 ?U) ; undo-all
+                                (_ ?q)))) ; exit
+                     val))))
+        (perform-replace "^\\|\b\\|$" "foo" t t nil))
+      ;; After undo text must be the same.
+      (should (string= text (buffer-string))))))
 
 (provide 'mqr-tests)
 ;;; mqr-tests.el ends here

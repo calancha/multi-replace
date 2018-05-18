@@ -537,7 +537,9 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
                                    (setq real-match-data
                                          (save-excursion
                                            (goto-char (match-beginning 0))
-                                           (looking-at search-string)
+                                           (if (/= (match-beginning 0) (match-end 0))
+					                           (looking-at search-string)
+					                         (looking-back search-string (- (point) (length search-string))))
                                            (match-data t (nth 2 elt)))
                                          noedit
                                          (replace-match-maybe-edit
