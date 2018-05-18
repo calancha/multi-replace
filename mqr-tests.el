@@ -66,7 +66,9 @@
                                 (3 ?U) ; undo-all
                                 (_ ?q)))) ; exit
                      val))))
-        (mqr-perform-replace "^\\|\b\\|$" "foo" t t nil))
+        (let ((mqr-alist (list (cons "^\\|\b\\|$" "foo")))
+              (mqr--regexp-replace t))
+          (mqr-perform-replace "^\\|\b\\|$" '("") t t nil)))
       ;; After undo text must be the same.
       (should (string= text (buffer-string))))))
 
