@@ -66,7 +66,7 @@
                                 (3 ?U) ; undo-all
                                 (_ ?q)))) ; exit
                      val))))
-        (perform-replace "^\\|\b\\|$" "foo" t t nil))
+        (mqr-perform-replace "^\\|\b\\|$" "foo" t t nil))
       ;; After undo text must be the same.
       (should (string= text (buffer-string))))))
 
