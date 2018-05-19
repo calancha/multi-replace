@@ -26,3 +26,9 @@ following combos are analogs to those for the Vanila Emacs commands:
 (define-key global-map (kbd "H-%") 'mrep-query-replace)
 (define-key global-map (kbd "C-H-%") 'mrep-query-replace-regexp)
 ```
+
+# Video example
+
+Following video shows a typical situation where I use this library:
+
+https://www.dropbox.com/s/kg7xtjox59fy7l4/mqr_example.mkv?dl=0
