@@ -10,9 +10,9 @@
 ;; URL: https://github.com/calancha/multi-replace
 ;; Keywords: convenience, extensions, lisp
 ;; Created: Sat May 12 22:09:30 JST 2018
-;; Version: 0.1.5
+;; Version: 0.1.6
 ;; Package-Requires: ((emacs "24.4"))
-;; Last-Updated: Tue May 15 01:12:16 JST 2018
+;; Last-Updated: Sat May 19 09:56:45 JST 2018
 ;;
 
 ;;; Commentary:
