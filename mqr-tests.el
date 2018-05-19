@@ -51,7 +51,6 @@
 
 (ert-deftest mqr-query-replace-undo-bug31492 ()
   "Test for https://debbugs.gnu.org/31492 ."
-  (skip-unless (> emacs-major-version 26))
   (let ((text "a\nb\nc\n")
         (count 0)
         (inhibit-message t))

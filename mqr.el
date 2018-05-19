@@ -10,9 +10,9 @@
 ;; URL: https://github.com/calancha/multi-replace
 ;; Keywords: convenience, extensions, lisp
 ;; Created: Sat May 12 22:09:30 JST 2018
-;; Version: 0.1.6
+;; Version: 0.2.0
 ;; Package-Requires: ((emacs "24.4"))
-;; Last-Updated: Sat May 19 09:56:45 JST 2018
+;; Last-Updated: Sat May 19 10:23:45 JST 2018
 ;;
 
 ;;; Commentary:
@@ -59,6 +59,77 @@
 
 (defvar mqr-alist nil
   "List of conses (REGEXP . REPLACEMENT).")
+
+;; We define `mqr-query-replace-help' and `mqr-query-replace-map'
+;; to support `mqr-query-replace' undo feature in Emacs version < 26.
+(defconst mqr-query-replace-help
+  "Type Space or `y' to replace one match, Delete or `n' to skip to next,
+RET or `q' to exit, Period to replace one match and exit,
+Comma to replace but not move point immediately,
+C-r to enter recursive edit (\\[exit-recursive-edit] to get out again),
+C-w to delete match and recursive edit,
+C-l to clear the screen, redisplay, and offer same replacement again,
+! to replace all remaining matches in this buffer with no more questions,
+^ to move point back to previous match,
+u to undo previous replacement,
+U to undo all replacements,
+E to edit the replacement string.
+In multi-buffer replacements type `Y' to replace all remaining
+matches in all remaining buffers with no more questions,
+`N' to skip to the next buffer without replacing remaining matches
+in the current buffer."
+  "Help message while in `mqr-query-replace'.")
+
+(defvar mqr-query-replace-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map " " 'act)
+    (define-key map "\d" 'skip)
+    (define-key map [delete] 'skip)
+    (define-key map [backspace] 'skip)
+    (define-key map "y" 'act)
+    (define-key map "n" 'skip)
+    (define-key map "Y" 'act)
+    (define-key map "N" 'skip)
+    (define-key map "e" 'edit-replacement)
+    (define-key map "E" 'edit-replacement)
+    (define-key map "," 'act-and-show)
+    (define-key map "q" 'exit)
+    (define-key map "\r" 'exit)
+    (define-key map [return] 'exit)
+    (define-key map "." 'act-and-exit)
+    (define-key map "\C-r" 'edit)
+    (define-key map "\C-w" 'delete-and-edit)
+    (define-key map "\C-l" 'recenter)
+    (define-key map "!" 'automatic)
+    (define-key map "^" 'backup)
+    (define-key map "u" 'undo)
+    (define-key map "U" 'undo-all)
+    (define-key map "\C-h" 'help)
+    (define-key map [f1] 'help)
+    (define-key map [help] 'help)
+    (define-key map "?" 'help)
+    (define-key map "\C-g" 'quit)
+    (define-key map "\C-]" 'quit)
+    (define-key map "\C-v" 'scroll-up)
+    (define-key map "\M-v" 'scroll-down)
+    (define-key map [next] 'scroll-up)
+    (define-key map [prior] 'scroll-down)
+    (define-key map [?\C-\M-v] 'scroll-other-window)
+    (define-key map [M-next] 'scroll-other-window)
+    (define-key map [?\C-\M-\S-v] 'scroll-other-window-down)
+    (define-key map [M-prior] 'scroll-other-window-down)
+    ;; Binding ESC would prohibit the M-v binding.  Instead, callers
+    ;; should check for ESC specially.
+    ;; (define-key map "\e" 'exit-prefix)
+    (define-key map [escape] 'exit-prefix)
+    map)
+  "Keymap of responses to questions posed by commands like `query-replace'.
+The \"bindings\" in this map are not commands; they are answers.
+The valid answers include `act', `skip', `act-and-show',
+`act-and-exit', `exit', `exit-prefix', `recenter', `scroll-up',
+`scroll-down', `scroll-other-window', `scroll-other-window-down',
+`edit', `edit-replacement', `delete-and-edit', `automatic',
+`backup', `undo', `undo-all', `quit', and `help'.")
 
 (defun mqr-alist (regexp-list replacements)
   "Make an alist with the elements of REGEXP-LIST and REPLACEMENTS.
@@ -200,7 +271,7 @@ Arguments FROM-STRING, QUERY-FLAG, REGEXP-FLAG, DELIMITED-FLAG, MAP, START, END,
 BACKWARD and REGION-NONCONTIGUOUS-P have same meaning as in `perform-replace'.
 Arg _REPEAT-COUNT is unused.
 Arg REPLACEMENTS is ignored: its overwriten inside the function body."
-  (or map (setq map query-replace-map))
+  (or map (setq map mqr-query-replace-map))
   (and query-flag minibuffer-auto-raise
        (raise-frame (window-frame (minibuffer-window))))
   (let* ((case-fold-search
@@ -254,7 +325,7 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
                              (if regexp-flag "regexp " "")
                              "%s with %s: "
                              (substitute-command-keys
-                              "(\\<query-replace-map>\\[help] for help) "))
+                              "(\\<mqr-query-replace-map>\\[help] for help) "))
                      minibuffer-prompt-properties))))
 
     ;; Unless a single contiguous chunk is selected, operate on multiple chunks.
@@ -480,7 +551,7 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
 				                    from-string " with "
 				                    next-replacement ".\n\n"
 				                    (substitute-command-keys
-				                     query-replace-help)))
+				                     mqr-query-replace-help)))
 			               (with-current-buffer standard-output
 			                 (help-mode))))
 			            ((eq def 'exit)
@@ -500,8 +571,7 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
 			               (message "No previous match")
 			               (ding 'no-terminate)
 			               (sit-for 1)))
-			            ((and (>= emacs-major-version 26)
-                              (or (eq def 'undo) (eq def 'undo-all)))
+			            ((or (eq def 'undo) (eq def 'undo-all))
 			             (if (null stack)
                              (progn
                                (message "Nothing to undo")
