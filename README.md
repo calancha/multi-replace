@@ -29,6 +29,6 @@ following combos are analogs to those for the Vanila Emacs commands:
 
 # Video example
 
-Following video shows a typical situation where I use this library:
+Use case example for this library:
 
 https://www.dropbox.com/s/kg7xtjox59fy7l4/mqr_example.mkv?dl=0
