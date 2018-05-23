@@ -12,7 +12,7 @@
 ;; Created: Sat May 12 22:09:30 JST 2018
 ;; Version: 0.2.0
 ;; Package-Requires: ((emacs "24.4"))
-;; Last-Updated: Sat May 19 10:23:45 JST 2018
+;; Last-Updated: Wed May 23 19:02:38 JST 2018
 ;;
 
 ;;; Commentary:
@@ -262,6 +262,37 @@ REPLACED, SEARCH-STR and NEXT-REPLACE has same meaning as in
 	           ,search-str ,next-replace)
          ,stack))
 
+(defun mqr-replace-match-maybe-edit (newtext fixedcase literal noedit match-data
+                                 &optional backward)
+  "Make a replacement with `replace-match', editing `\\?'.
+Like `replace-match-maybe-edit' with Bug#31492 fixed.
+NEWTEXT, FIXEDCASE, LITERAL, NOEDIT, MATCH-data, and BACKWARD
+have same meaning as in `replace-match-maybe-edit'."
+  (unless (or literal noedit)
+    (setq noedit t)
+    (while (string-match "\\(\\`\\|[^\\]\\)\\(\\\\\\\\\\)*\\(\\\\\\?\\)"
+			 newtext)
+      (setq newtext
+	    (read-string "Edit replacement string: "
+                         (prog1
+                             (cons
+                              (replace-match "" t t newtext 3)
+                              (1+ (match-beginning 3)))
+                           (setq match-data
+                                 (replace-match-data
+                                  nil match-data match-data))))
+	    noedit nil)))
+  (set-match-data match-data)
+  (replace-match newtext fixedcase literal)
+  ;; `query-replace' undo feature needs the beginning of the match position,
+  ;; but `replace-match' may change it, for instance, with a regexp like "^".
+  ;; Ensure that this function preserves the match data (Bug#31492).
+  (set-match-data match-data)
+  ;; `replace-match' leaves point at the end of the replacement text,
+  ;; so move point to the beginning when replacing backward.
+  (when backward (goto-char (nth 0 match-data)))
+  noedit)
+
 ;;; Modify `perform-replace' to handle multiple regexp input.
 (defun mqr-perform-replace (from-string replacements
 		                                 query-flag regexp-flag delimited-flag
@@ -474,7 +505,7 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
 		             start end search-string
 		             regexp-flag delimited-flag case-fold-search backward))
 		          (setq noedit
-			            (replace-match-maybe-edit
+			            (mqr-replace-match-maybe-edit
 			             next-replacement nocasify literal
 			             noedit real-match-data backward)
 			            replace-count (1+ replace-count)))
@@ -612,12 +643,10 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
                                    (setq real-match-data
                                          (save-excursion
                                            (goto-char (match-beginning 0))
-                                           (if (/= (match-beginning 0) (match-end 0))
-					                           (looking-at search-string)
-					                         (looking-back search-string (- (point) (length search-string))))
+                                           (looking-at search-string)
                                            (match-data t (nth 2 elt)))
                                          noedit
-                                         (replace-match-maybe-edit
+                                         (mqr-replace-match-maybe-edit
                                           next-replacement nocasify literal
                                           noedit real-match-data backward)
                                          replace-count (1- replace-count)
@@ -645,7 +674,7 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
 			            ((eq def 'act)
 			             (or replaced
 			                 (setq noedit
-				                   (replace-match-maybe-edit
+				                   (mqr-replace-match-maybe-edit
 				                    next-replacement nocasify literal
 				                    noedit real-match-data backward)
 				                   replace-count (1+ replace-count)))
@@ -653,7 +682,7 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
 			            ((eq def 'act-and-exit)
 			             (or replaced
 			                 (setq noedit
-				                   (replace-match-maybe-edit
+				                   (mqr-replace-match-maybe-edit
 				                    next-replacement nocasify literal
 				                    noedit real-match-data backward)
 				                   replace-count (1+ replace-count)))
@@ -662,7 +691,7 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
 			            ((eq def 'act-and-show)
 			             (unless replaced
 			               (setq noedit
-				                 (replace-match-maybe-edit
+				                 (mqr-replace-match-maybe-edit
 				                  next-replacement nocasify literal
 				                  noedit real-match-data backward)
 				                 replace-count (1+ replace-count)
@@ -676,7 +705,7 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
 			            ((or (eq def 'automatic) (eq def 'automatic-all))
 			             (or replaced
 			                 (setq noedit
-				                   (replace-match-maybe-edit
+				                   (mqr-replace-match-maybe-edit
 				                    next-replacement nocasify literal
 				                    noedit real-match-data backward)
 				                   replace-count (1+ replace-count)))
@@ -720,7 +749,7 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
 			             (if replaced
 			                 (set-match-data real-match-data)
 			               (setq noedit
-				                 (replace-match-maybe-edit
+				                 (mqr-replace-match-maybe-edit
 				                  next-replacement nocasify literal noedit
 				                  real-match-data backward)
 				                 replaced t))
