@@ -752,7 +752,8 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
 				                 (mqr-replace-match-maybe-edit
 				                  next-replacement nocasify literal noedit
 				                  real-match-data backward)
-				                 replaced t))
+				                 replaced t)
+				           (setq next-replacement-replaced next-replacement))
 			             (setq done t))
 
 			            ((eq def 'delete-and-edit)
