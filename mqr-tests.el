@@ -49,27 +49,108 @@
     (should (equal (buffer-string) "aaa-123 bbb-32 ccc-10z99"))))
 
 
-(ert-deftest mqr-query-replace-undo-bug31492 ()
+
+;;; Tests for `query-replace' undo feature.
+(defun mqr-tests-clauses (char-nums def-chr)
+  "Build the clauses of the `pcase' in `mqr-tests-with-undo'.
+CHAR-NUMS is a list of elements (CHAR . NUMS).
+CHAR is one of the chars ?, ?\s ?u ?U ?E ?q.
+NUMS is a list of integers; they are the patters to match,
+while CHAR is the return value.
+DEF-CHAR is the default character to return in the `pcase'
+when any of the clauses match."
+  (append
+   (delq nil
+         (mapcar (lambda (chr)
+                   (if (cadr (assq chr char-nums))
+                       (let ((it (cadr (assq chr char-nums))))
+                         (if (cdr it)
+                             `(,(cons 'or it) ,chr)
+                           `(,(car it) ,chr)))))
+                 '(?, ?\s ?u ?U ?E ?q)))
+   `((_ ,def-chr))))
+
+(defvar mqr-tests-bind-read-string nil
+  "A string to bind `read-string' and avoid the prompt.")
+
+(defmacro mqr-tests-with-undo (input from to char-nums def-chr &rest body)
+  "Helper to test `query-replace' undo feature.
+INPUT is a string to insert in a temporary buffer.
+FROM is the string to match for replace.
+TO is the replacement string.
+CHAR-NUMS is a list of elements (CHAR . NUMS).
+CHAR is one of the chars ?, ?\s ?u ?U ?E ?q.
+NUMS is a list of integers.
+DEF-CHAR is the char ?\s or ?q.
+BODY is a list of forms.
+Return the last evaled form in BODY."
+  (declare (indent 5) (debug (stringp stringp stringp form characterp body)))
+  (let ((text (make-symbol "text"))
+        (count (make-symbol "count")))
+    `(let* ((,text ,input)
+            (,count 0)
+            (inhibit-message t))
+       (with-temp-buffer
+         (insert ,text)
+         (goto-char 1)
+         ;; Bind `read-event' to simulate user input.
+         ;; If `mqr-tests-bind-read-string' is non-nil, then
+         ;; bind `read-string' as well.
+         (cl-letf (((symbol-function 'read-event)
+                    (lambda (&rest args)
+                      (cl-incf ,count)
+                      (let ((val
+                             (pcase ,count
+                               ,@(mqr-tests-clauses char-nums def-chr))))
+                        val)))
+                   ((symbol-function 'read-string)
+                    (if mqr-tests-bind-read-string
+                        (lambda (&rest args) mqr-tests-bind-read-string)
+                      (symbol-function 'read-string))))
+           (let ((mqr-alist (list (cons ,from ,to)))
+                 (mqr--regexp-replace t))
+             (mqr-perform-replace ,from '("") t t nil)))
+         ,@body))))
+
+(defun mqr-tests--query-replace-undo (&optional comma)
+  (let ((input "111"))
+    (if comma
+        (should
+         (mqr-tests-with-undo
+          input "1" "2" ((?, (2)) (?u (3)) (?q (4))) ?\s (buffer-string)))
+      (should
+       (mqr-tests-with-undo
+        input "1" "2" ((?\s (2)) (?u (3)) (?q (4))) ?\s (buffer-string))))))
+
+(ert-deftest mqr--undo ()
+  (should (string= "211" (mqr-tests--query-replace-undo)))
+  (when (>= emacs-major-version 25)
+    (should (string= "211" (mqr-tests--query-replace-undo 'comma)))))
+
+(ert-deftest mqr-undo-bug31073 ()
+  "Test for https://debbugs.gnu.org/31073 ."
+  (let ((input "aaa aaa"))
+    (should
+     (mqr-tests-with-undo
+      input "a" "B" ((?\s (1 2 3)) (?U (4))) ?q
+      (string= input (buffer-string))))))
+
+(ert-deftest mqr-undo-bug31492 ()
   "Test for https://debbugs.gnu.org/31492 ."
-  (let ((text "a\nb\nc\n")
-        (count 0)
-        (inhibit-message t))
-    (with-temp-buffer
-      (insert text)
-      (goto-char 1)
-      (cl-letf (((symbol-function 'read-event)
-                 (lambda (&rest args)
-                   (cl-incf count)
-                   (let ((val (pcase count
-                                ((or 1 2) ?\s) ; replace current and go next
-                                (3 ?U) ; undo-all
-                                (_ ?q)))) ; exit
-                     val))))
-        (let ((mqr-alist (list (cons "^\\|\b\\|$" "foo")))
-              (mqr--regexp-replace t))
-          (mqr-perform-replace "^\\|\b\\|$" '("") t t nil)))
-      ;; After undo text must be the same.
-      (should (string= text (buffer-string))))))
+  (let ((input "a\nb\nc\n"))
+    (should
+     (mqr-tests-with-undo
+      input "^\\|\b\\|$" "foo" ((?\s (1 2)) (?U (3))) ?q
+      (string= input (buffer-string))))))
+
+(ert-deftest mqr-undo-bug31538 ()
+  "Test for https://debbugs.gnu.org/31538 ."
+  (let ((input "aaa aaa")
+        (mqr-tests-bind-read-string "Bfoo"))
+    (should
+     (mqr-tests-with-undo
+      input "a" "B" ((?\s (1 2 3)) (?E (4)) (?U (5))) ?q
+      (string= input (buffer-string))))))
 
 (provide 'mqr-tests)
 ;;; mqr-tests.el ends here
