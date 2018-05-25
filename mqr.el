@@ -10,9 +10,9 @@
 ;; URL: https://github.com/calancha/multi-replace
 ;; Keywords: convenience, extensions, lisp
 ;; Created: Sat May 12 22:09:30 JST 2018
-;; Version: 0.2.0
+;; Version: 0.2.1
 ;; Package-Requires: ((emacs "24.4"))
-;; Last-Updated: Wed May 23 19:02:38 JST 2018
+;; Last-Updated: Fri May 25 12:48:49 JST 2018
 ;;
 
 ;;; Commentary:
@@ -158,76 +158,6 @@ Each element is a cons (REGEXP . REPLACEMENT)."
             (set-match-data match-data)
             (match-substitute-replacement to-string))
         to-string))))
-
-(defun mqr--replace-interactive-spec (prompt)
-  "Helper function to get command arguments.
-Ask user input with PROMPT."
-  (let ((alist '())
-        (start (if (use-region-p) (region-beginning) (point-min)))
-        (end (if (use-region-p) (region-end) (point-max)))
-        (first-prompt t)
-        regexp replace)
-    (while (not (equal regexp ""))
-      (let (query-replace-defaults)
-        (setq regexp
-              (query-replace-read-from
-               (format
-                "%s%s" prompt (if first-prompt
-                                  ""
-                                " [RET to start replacements]"))
-               nil))
-        (if first-prompt (setq first-prompt nil))
-        (setq query-replace-defaults nil)
-        (unless (equal regexp "")
-          (setq replace (query-replace-read-to regexp prompt nil))
-          (setq query-replace-defaults nil)
-          (push (cons regexp replace) alist))))
-    (list (nreverse alist) start end)))
-
-(defun mqr--replace (alist &optional start end regexp-flag)
-  "Helper function for `mqr-replace' and `mqr-replace-regexp'.
-Argument ALIST is a list of conses (REGEXP-OR-STRING . TO).
-START and END define the region where the commands act.
-If REGEXP-FLAG is non-nil then call `mqr-replace-regexp'.  Otherwise,
-call `mqr-replace'."
-  (unless start (setq start (point-min)))
-  (unless end (setq end (point-max)))
-  (let ((regexp
-         (if regexp-flag (mapconcat #'identity (mapcar #'car alist) "\\|")
-           (regexp-opt (mapcar #'car alist))))
-        (mqr-alist alist))
-    (mqr-perform-replace regexp '("") nil t nil nil nil start end)))
-
-(defun mqr-replace (alist &optional start end)
-  "Match and replace several strings.
-ALIST is a list of conses (STRING . TO).
-START and END define the region where look for matches.  If the
-region is active, then they default to `region-beginning'
-and `region-end'.  Otherwise, apply the command in the entire buffer.
-
-Interactively, prompt user for the conses (STRING . TO) until
-the user inputs '' for STRING."
-  (interactive (mqr--replace-interactive-spec "Multi replace"))
-  (mqr--replace alist start end))
-
-(defun mqr-replace-regexp (alist &optional start end)
-  "Match and replace several regexps.
-ALIST is a list of conses (REGEXP . TO).
-Match regexps in the order they appear in ALIST.
-
-START and END define the region where look for matches.  If the
-region is active, then they default to `region-beginning'
-and `region-end'.  Otherwise, apply the command in the entire buffer.
-
-Interactively, prompt user for the conses (REGEXP . TO) until
-the user inputs '' for REGEXP."
-  (interactive (mqr--replace-interactive-spec "Multi replace regexp"))
-  (let ((mqr--regexp-replace t))
-    (mqr--replace alist start end 'regexp-flag)))
-
-
-
-;;; Multi query replace
 
 (defun mqr--query-replace-interactive-spec (prompt)
   "Helper function to get command arguments.
@@ -812,6 +742,77 @@ Arg REPLACEMENTS is ignored: its overwriten inside the function body."
 		           "")))
     (or (and keep-going stack) multi-buffer)))
 
+(defun mqr--replace-interactive-spec (prompt)
+  "Helper function to get command arguments.
+Ask user input with PROMPT."
+  (let ((alist '())
+        (start (if (use-region-p) (region-beginning) (point-min)))
+        (end (if (use-region-p) (region-end) (point-max)))
+        (first-prompt t)
+        regexp replace)
+    (while (not (equal regexp ""))
+      (let (query-replace-defaults)
+        (setq regexp
+              (query-replace-read-from
+               (format
+                "%s%s" prompt (if first-prompt
+                                  ""
+                                " [RET to start replacements]"))
+               nil))
+        (if first-prompt (setq first-prompt nil))
+        (setq query-replace-defaults nil)
+        (unless (equal regexp "")
+          (setq replace (query-replace-read-to regexp prompt nil))
+          (setq query-replace-defaults nil)
+          (push (cons regexp replace) alist))))
+    (list (nreverse alist) start end)))
+
+
+;;; Multi replace (regexp)
+(defun mqr--replace (alist &optional start end regexp-flag)
+  "Helper function for `mqr-replace' and `mqr-replace-regexp'.
+Argument ALIST is a list of conses (REGEXP-OR-STRING . TO).
+START and END define the region where the commands act.
+If REGEXP-FLAG is non-nil then call `mqr-replace-regexp'.  Otherwise,
+call `mqr-replace'."
+  (unless start (setq start (point-min)))
+  (unless end (setq end (point-max)))
+  (let ((regexp
+         (if regexp-flag (mapconcat #'identity (mapcar #'car alist) "\\|")
+           (regexp-opt (mapcar #'car alist))))
+        (mqr-alist alist))
+    (mqr-perform-replace regexp '("") nil t nil nil nil start end)))
+
+(defun mqr-replace (alist &optional start end)
+  "Match and replace several strings.
+ALIST is a list of conses (STRING . TO).
+START and END define the region where look for matches.  If the
+region is active, then they default to `region-beginning'
+and `region-end'.  Otherwise, apply the command in the entire buffer.
+
+Interactively, prompt user for the conses (STRING . TO) until
+the user inputs '' for STRING."
+  (interactive (mqr--replace-interactive-spec "Multi replace"))
+  (mqr--replace alist start end))
+
+(defun mqr-replace-regexp (alist &optional start end)
+  "Match and replace several regexps.
+ALIST is a list of conses (REGEXP . TO).
+Match regexps in the order they appear in ALIST.
+
+START and END define the region where look for matches.  If the
+region is active, then they default to `region-beginning'
+and `region-end'.  Otherwise, apply the command in the entire buffer.
+
+Interactively, prompt user for the conses (REGEXP . TO) until
+the user inputs '' for REGEXP."
+  (interactive (mqr--replace-interactive-spec "Multi replace regexp"))
+  (let ((mqr--regexp-replace t))
+    (mqr--replace alist start end 'regexp-flag)))
+
+
+
+;;; Multi query replace (regexp)
 (defun mqr-query-replace (alist &optional delimited start end backward region-noncontiguous-p)
   "Multi-dimensional version of `query-replace'.
 ALIST is a list of conses (STRING . REPLACEMENT).
