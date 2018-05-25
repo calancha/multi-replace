@@ -196,11 +196,7 @@ call `mqr-replace'."
          (if regexp-flag (mapconcat #'identity (mapcar #'car alist) "\\|")
            (regexp-opt (mapcar #'car alist))))
         (mqr-alist alist))
-    (save-excursion
-      (goto-char start)
-      (while (re-search-forward regexp nil end)
-        (let ((replacement (mqr--replacement (match-string 0))))
-          (replace-match replacement))))))
+    (mqr-perform-replace regexp '("") nil t nil nil nil start end)))
 
 (defun mqr-replace (alist &optional start end)
   "Match and replace several strings.
