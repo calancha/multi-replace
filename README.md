@@ -2,9 +2,9 @@
 
 [![Build Status](https://api.travis-ci.org/calancha/multi-replace.svg?branch=master)](https://travis-ci.org/calancha/multi-replace)
 
-This lib defines the commands **mrep-replace**,
-**mrep-replace-regexp**, **mrep-query-replace** and
-**mrep-query-replace-regexp** to match and replace several regexps
+This lib defines the commands **mqr-replace**,
+**mqr-replace-regexp**, **mqr-query-replace** and
+**mqr-query-replace-regexp** to match and replace several regexps
 in the region.
 
 Interactively, prompt the user for the regexps and their replacements.
@@ -18,13 +18,13 @@ your *load-path*.  Then, add the following line into your .emacs:
 (require 'mqr)
 ```
 
-You might want to bind **mrep-query-replace**, **mrep-query-replace-regexp**
+You might want to bind **mqr-query-replace**, **mqr-query-replace-regexp**
 to some easy to remember keys.  If you have the Hyper key, then the
 following combos are analogs to those for the Vanila Emacs commands:
 
 ```
-(define-key global-map (kbd "H-%") 'mrep-query-replace)
-(define-key global-map (kbd "C-H-%") 'mrep-query-replace-regexp)
+(define-key global-map (kbd "H-%") 'mqr-query-replace)
+(define-key global-map (kbd "C-H-%") 'mqr-query-replace-regexp)
 ```
 
 # Video example
