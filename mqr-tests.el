@@ -154,5 +154,23 @@ Return the last evaled form in BODY."
       input "a" "B" ((?\s (1 2 3)) (?E (4)) (?U (5))) ?q
       (string= input (buffer-string))))))
 
+(ert-deftest mar-tests-lisp-replacement ()
+  "Test that commands handle Lisp expression replacements starting with '\\,'."
+  ;; `mqr-query-replace-regexp'
+  (let ((input "foo 123"))
+    (should
+     (mqr-tests-with-undo
+      input "foo \\([0-9]+\\)" "\\,(format \"foo %d\" (1+ (string-to-number \\1)))" ((?\s (1 2 3))) ?\s
+      (string= "foo 124" (buffer-string))))
+    ;; `mqr-replace-regexp'
+    (with-temp-buffer
+      (insert input)
+      (goto-char 1)
+      (should-not
+       (mqr-replace-regexp
+        '(("foo \\([0-9]+\\)" . "\\,(format \"foo %d\" (1+ (string-to-number \\1)))"))
+        (point-min) (point-max))))))
+
+
 (provide 'mqr-tests)
 ;;; mqr-tests.el ends here
